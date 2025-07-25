@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <p>Welcome to <%= title %></p>
+    <a href="anime/current-season"> CLick me For Knowwing about Recent anime in this Seasons</a>
+    <div>
+       <form action="/submit" id="anime-year-season" method="post">
+        <br>
+      <input type="number" name="year" id="year">
+      <br>
+      <input type="text" name="season" id="season">
+      <br>
+      <input type="submit" value="Submit" id="submit">
+     </form>
+    </div>
+    <div>
+      <nav>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/anime/current-season">About</a></li>
+          
+        </ul>
+      </nav>
+    </div>
+    <Script>
+       const form=document.getElementById('anime-year-season');
+       form.addEventListener('submit',(event)=>{
+        event.preventDefault();
+          let year=document.getElementById('year').value;
+          let season=document.getElementById('season').value;
+          window.location.href=`/anime/${year}/${season}`;
+
+       })
+    </Script>
+  </body>
+</html>
