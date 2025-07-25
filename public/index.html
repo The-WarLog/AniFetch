@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimeSpace - Discover Anime</title>
+    <style>
+        /* General Resets and Body Styling */
+        * { 
+            padding: 0; 
+            margin: 0; 
+            box-sizing: border-box; 
+        }
+        body { 
+            background-color: rgb(101, 207, 221); 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            color: #333;
+        }
+
+        /* Header and Navigation */
+        header {
+            background: #222;
+            color: #fff;
+            padding: 16px 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .main-title {
+            text-align: center;
+            margin-bottom: 12px;
+            font-size: 2em;
+        }
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+        nav ul li a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: color 0.2s;
+            cursor: pointer;
+        }
+        nav ul li a:hover {
+            color: #66e0ff;
+        }
+
+        /* Controls Area */
+        .controls-container {
+            padding: 24px 16px;
+            background-color: rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .controls-grid {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .control-group label {
+            font-weight: bold;
+        }
+        .control-group input[type="text"], .control-group select {
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+            transition: box-shadow 0.2s;
+        }
+        .control-group input[type="text"]:focus, .control-group select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(151, 68, 167, 0.4);
+        }
+        .control-group button {
+            padding: 10px 22px;
+            border-radius: 8px;
+            border: none;
+            background: #9744a7;
+            color: #fff;
+            font-weight: bold;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        .control-group button:hover {
+            background: #813a90;
+            transform: scale(1.05);
+        }
+
+        /* Main Content Container */
+        .content-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 24px;
+            margin-top: 20px;
+        }
+        .card {
+            background: #fff;
+            color: #222;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+        .card h3 {
+            font-size: 1.2em;
+            margin-bottom: 12px;
+            min-height: 50px;
+        }
+        .card p {
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        .card p:not(:last-child) {
+            margin-bottom: 8px;
+        }
+
+        /* Status/Error Message Styling */
+        .status-message {
+            text-align: center;
+            font-size: 1.2em;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 12px;
+            grid-column: 1 / -1;
+        }
+        .status-message.error {
+            color: #d93025;
+            font-weight: bold;
+        }
+
+        /* About Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 1000;
+        }
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.visible .modal-content {
+            transform: scale(1);
+        }
+        .modal-content h2 {
+            margin-bottom: 15px;
+        }
+        .modal-content p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.8em;
+            cursor: pointer;
+            color: #888;
+        }
+
+        /* Footer */
+        .footer-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #222;
+            color: #fff;
+            padding: 24px 32px;
+            margin-top: 40px;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 class="main-title">AnimeSpace</h1>
+        <nav>
+            <ul>
+                <li><a id="home-link">Home</a></li>
+                <li><a id="about-link">About</a></li>
+                <li><a>Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="controls-container">
+        <div class="controls-grid">
+            <div class="control-group">
+                <label for="name-search-input">Search by Name:</label>
+                <input type="text" id="name-search-input" placeholder="e.g., 'Cowboy Bebop'">
+                <button id="name-search-btn">Search</button>
+            </div>
+            <div class="control-group">
+                <label for="year-select">Search by Season:</label>
+                <select id="year-select"></select>
+                <select id="season-select">
+                    <option value="Winter">Winter</option>
+                    <option value="Spring">Spring</option>
+                    <option value="Summer">Summer</option>
+                    <option value="Fall">Fall</option>
+                </select>
+                <button id="season-search-btn">Get Season</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="content-wrapper">
+        <div class="cards"></div>
+    </main>
+
+    <!-- About Modal HTML -->
+    <div class="modal-overlay" id="about-modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="modal-close">&times;</button>
+            <h2>About AnimeSpace</h2>
+            <p>This project is a platform for anime fans to discover, search, and explore anime content, powered by the Jikan API.</p>
+            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+            <p><b>Created by:</b></p>
+            <p>Varun (Frontend) & Divyes (Backend)</p>
+        </div>
+    </div>
+
+    <footer class="footer-bar">
+        <div class="footer-left">Thank You</div>
+        <div class="footer-right">
+            <a href="#" title="Instagram" class="social-link">Instagram</a>
+            <a href="#" title="Twitter" class="social-link">Twitter</a>
+            <a href="#" title="Facebook" class="social-link">Facebook</a>
+        </div>
+    </footer>
+
+    <script>
+        // --- DOM Element Selection ---
+        const homeLink = document.getElementById('home-link');
+        const aboutLink = document.getElementById('about-link');
+        const aboutModal = document.getElementById('about-modal');
+        const modalCloseBtn = document.getElementById('modal-close');
+        const nameSearchInput = document.getElementById('name-search-input');
+        const nameSearchBtn = document.getElementById('name-search-btn');
+        const yearSelect = document.getElementById('year-select');
+        const seasonSelect = document.getElementById('season-select');
+        const seasonSearchBtn = document.getElementById('season-search-btn');
+        const cardsContainer = document.querySelector('.cards');
+
+        const API_BASE_URL = 'http://localhost:3000';
+
+        function showStatusMessage(message, isError = false) {
+            cardsContainer.innerHTML = `<div class="status-message ${isError ? 'error' : ''}">${message}</div>`;
+        }
+
+        function displayAnime(animeList) {
+            cardsContainer.innerHTML = '';
+            if (!animeList || animeList.length === 0) {
+                showStatusMessage('No anime found for this selection.');
+                return;
+            }
+            animeList.forEach(anime => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                // --- FIX: Changed anime.airdate to anime.airDate to match backend property ---
+                card.innerHTML = `
+                    <h3>${anime.titleEnglish || anime.title}</h3>
+                    <p><b>Score:</b> ${anime.malScore !== null ? anime.malScore : 'N/A'}</p>
+                    <p><b>Status:</b> ${anime.status || 'Unknown'}</p>
+                    <p><b>Rating:</b> ${anime.rating || 'Unknown'}</p>
+                    <p><b>Air-Date:</b> ${anime.airDate || 'Unknown'}</p> 
+                    <p><b>Broadcast:</b> ${anime.broadcast || 'Unknown'}</p>
+                `;
+                cardsContainer.appendChild(card);
+            });
+        }
+
+        async function fetchFromAPI(url, loadingMessage) {
+            showStatusMessage(loadingMessage);
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.message || `Request failed with status ${response.status}`);
+                }
+                displayAnime(result.data);
+            } catch (err) {
+                console.error("Fetch error:", err);
+                showStatusMessage(err.message, true);
+            }
+        }
+        
+        function handleNameSearch() {
+            const query = nameSearchInput.value.trim();
+            if (!query) return;
+            const url = `${API_BASE_URL}/anime/search/${encodeURIComponent(query)}?limit=25`;
+            fetchFromAPI(url, `Searching for "${query}"...`);
+        }
+        
+        function handleSeasonSearch() {
+            const year = yearSelect.value;
+            const season = seasonSelect.value;
+            const url = `${API_BASE_URL}/anime/${year}/${season.toLowerCase()}?limit=20`;
+            fetchFromAPI(url, `Fetching anime for ${season} ${year}...`);
+        }
+
+        function fetchCurrentSeason() {
+            const url = `${API_BASE_URL}/anime/current-season?limit=20`;
+            fetchFromAPI(url, 'Loading current season anime...');
+        }
+
+        function populateYearDropdown() {
+            const currentYear = new Date().getFullYear();
+            for (let year = currentYear; year >= 1990; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            populateYearDropdown();
+            fetchCurrentSeason();
+
+            // --- Event Listeners ---
+            homeLink.addEventListener('click', fetchCurrentSeason);
+            
+            nameSearchBtn.addEventListener('click', handleNameSearch);
+            nameSearchInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') handleNameSearch();
+            });
+
+            seasonSearchBtn.addEventListener('click', handleSeasonSearch);
+
+            // About Modal Listeners
+            aboutLink.addEventListener('click', () => {
+                aboutModal.classList.add('visible');
+            });
+            modalCloseBtn.addEventListener('click', () => {
+                aboutModal.classList.remove('visible');
+            });
+            aboutModal.addEventListener('click', (event) => {
+                if (event.target === aboutModal) {
+                    aboutModal.classList.remove('visible');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

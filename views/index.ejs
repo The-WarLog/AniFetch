@@ -1,41 +1,197 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-  </head>
-  <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
-    <a href="anime/current-season"> CLick me For Knowwing about Recent anime in this Seasons</a>
-    <div>
-       <form action="/submit" id="anime-year-season" method="post">
-        <br>
-      <input type="number" name="year" id="year">
-      <br>
-      <input type="text" name="season" id="season">
-      <br>
-      <input type="submit" value="Submit" id="submit">
-     </form>
-    </div>
-    <div>
-      <nav>
-        <ul>
-          <li><a href="/">Home</a></li>
-          <li><a href="/anime/current-season">About</a></li>
-          
-        </ul>
-      </nav>
-    </div>
-    <Script>
-       const form=document.getElementById('anime-year-season');
-       form.addEventListener('submit',(event)=>{
-        event.preventDefault();
-          let year=document.getElementById('year').value;
-          let season=document.getElementById('season').value;
-          window.location.href=`/anime/${year}/${season}`;
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title> <%-- EJS syntax to inject the pageTitle from server.js --%>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: #5c677d; }
+        .controls { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+        .controls label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .controls input, .controls select, .controls button { padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em; }
+        .controls button { background-color: #007bff; color: white; cursor: pointer; border: none; transition: background-color 0.2s; }
+        .controls button:hover { background-color: #0056b3; }
+        #animeList { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .anime-card { background-color: #fff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; padding-bottom: 15px; }
+        .anime-card img { max-width: 100%; height: 280px; object-fit: cover; display: block; margin-bottom: 10px; }
+        .anime-card h3 { font-size: 1.1em; margin: 10px 5px; min-height: 2.8em; line-height: 1.4em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .anime-card p { font-size: 0.9em; color: #666; margin: 0 5px 10px; }
+        .pagination-controls { margin-top: 20px; text-align: center; }
+        .pagination-controls button { margin: 0 5px; padding: 10px 15px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .pagination-controls button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #loading { text-align: center; font-style: italic; color: #888; margin-top: 20px; display: none; }
+        .current-page-info { font-weight: bold; margin: 0 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Anime Season Lister</h1>
 
-       })
-    </Script>
-  </body>
+        <div class="controls">
+            <div>
+                <label for="year">Year:</label>
+                <input type="number" id="year" value="2024" min="1950" max="2100">
+            </div>
+            <div>
+                <label for="season">Season:</label>
+                <select id="season">
+                    <option value="spring">Spring</option>
+                    <option value="summer" selected>Summer</option>
+                    <option value="fall">Fall</option>
+                    <option value="winter">Winter</option>
+                </select>
+            </div>
+            <div>
+                <label for="limit">Items per page:</label>
+                <input type="number" id="limit" value="10" min="1" max="100">
+            </div>
+            <button id="fetchButton">Fetch Anime</button>
+        </div>
+
+        <div id="loading">Loading anime...</div>
+
+        <h2></h2>
+        <div id="animeList">
+            </div>
+
+        <div class="pagination-controls">
+            <button id="prevPage" disabled>Previous Page</button>
+            <span class="current-page-info">Page <span id="currentPage">1</span> of <span id="lastPage">?</span></span>
+            <button id="nextPage" disabled>Next Page</button>
+        </div>
+    </div>
+
+    <script>
+        const yearInput = document.getElementById('year');
+        const seasonSelect = document.getElementById('season');
+        const limitInput = document.getElementById('limit');
+        const fetchButton = document.getElementById('fetchButton');
+        const animeListDiv = document.getElementById('animeList');
+        const loadingDiv = document.getElementById('loading');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const currentPageSpan = document.getElementById('currentPage');
+        const lastPageSpan = document.getElementById('lastPage');
+        const currentSeasonHeader = document.querySelector('.container h2');
+
+        let currentPage = 1;
+        let lastPage = 1;
+        let currentYear = yearInput.value;
+        let currentSeason = seasonSelect.value;
+        let currentLimit = limitInput.value;
+
+        // Function to fetch and display anime
+        async function fetchAndDisplayAnime() {
+            const year = yearInput.value;
+            const season = seasonSelect.value;
+            const limit = limitInput.value;
+
+            // Update current values for pagination
+            currentYear = year;
+            currentSeason = season;
+            currentLimit = limit;
+
+            animeListDiv.innerHTML = ''; // Clear previous list
+            loadingDiv.style.display = 'block'; // Show loading indicator
+            prevPageBtn.disabled = true;
+            nextPageBtn.disabled = true;
+
+            try {
+                // --- CRITICAL FIX: Correct the API URL base path in the frontend ---
+                // It should now be /anime/:year/:season, not /api/anime
+                const url = `/anime/${year}/${season}?page=${currentPage}&limit=${limit}`; // Updated API base path
+                currentSeasonHeader.textContent = `Anime for ${season.charAt(0).toUpperCase() + season.slice(1)} ${year}`;
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to fetch anime');
+                }
+                const data = await response.json();
+                console.log('Raw data from API (from EJS):', data); // For frontend debugging
+
+                if (data.data && data.data.length > 0) {
+                    data.data.forEach(anime => {
+                        console.log('Individual anime object (from EJS):', anime); // For frontend debugging
+
+                        // --- CRITICAL FIX: More robust image URL extraction ---
+                        // Checks for webp, then jpg, then uses a placeholder.
+                        const imageUrl = (anime.images && anime.images.webp && anime.images.webp.image_url)
+                                        ? anime.images.webp.image_url
+                                        : (anime.images && anime.images.jpg && anime.images.jpg.image_url)
+                                        ? anime.images.jpg.image_url
+                                        : 'https://via.placeholder.com/225x320?text=No+Image';
+
+                        // --- CRITICAL FIX: Ensure title and score are accessed correctly with fallbacks ---
+                        // These now match the 'title' and 'score' properties being sent from animecontroller.js
+                        const animeTitle = anime.title || 'Untitled Anime';
+                        const animeScore = anime.score !== null && anime.score !== undefined ? `Score: ${anime.score}` : 'N/A';
+
+                        const card = document.createElement('div');
+                        card.classList.add('anime-card');
+
+                        card.innerHTML = `
+                            <img src="${imageUrl}" alt="${animeTitle}">
+                            <h3>${animeTitle}</h3>
+                            <p>${animeScore}</p>
+                        `;
+                        animeListDiv.appendChild(card);
+                    });
+                } else {
+                    animeListDiv.innerHTML = '<p>No anime found for this season and year.</p>';
+                }
+
+                // Update pagination controls using the pagination object from your API
+                if (data.pagination) {
+                    lastPage = data.pagination.totalPages || 1; // Use totalPages from your pagination object
+                    currentPageSpan.textContent = data.pagination.currentPage; // Use currentPage
+                    lastPageSpan.textContent = lastPage;
+                    prevPageBtn.disabled = data.pagination.currentPage === 1;
+                    nextPageBtn.disabled = data.pagination.currentPage >= lastPage;
+                } else {
+                    currentPageSpan.textContent = 1;
+                    lastPageSpan.textContent = 1;
+                    prevPageBtn.disabled = true;
+                    nextPageBtn.disabled = true;
+                }
+
+            } catch (error) {
+                console.error('Error fetching anime:', error);
+                animeListDiv.innerHTML = `<p style="color: red;">Error: ${error.message}. Please try again.</p>`;
+                // Reset pagination info on error
+                currentPageSpan.textContent = 1;
+                lastPageSpan.textContent = '?';
+                prevPageBtn.disabled = true;
+                nextPageBtn.disabled = true;
+            } finally {
+                loadingDiv.style.display = 'none'; // Hide loading indicator
+            }
+        }
+
+        // Event Listeners
+        fetchButton.addEventListener('click', () => {
+            currentPage = 1; // Reset to page 1 when fetching new season/year
+            fetchAndDisplayAnime();
+        });
+
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchAndDisplayAnime();
+            }
+        });
+
+        nextPageBtn.addEventListener('click', () => {
+            if (currentPage < lastPage) {
+                currentPage++;
+                fetchAndDisplayAnime();
+            }
+        });
+
+        // Initial load when the page first loads
+        fetchAndDisplayAnime();
+    </script>
+</body>
 </html>

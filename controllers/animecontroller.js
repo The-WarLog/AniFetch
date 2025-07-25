@@ -1,90 +1,134 @@
-const axios=require("axios");
-const { name } = require("ejs");
+const axios = require("axios");
+
+// Ensure JIKAN_API_BASE_URL is loaded from .env, with a fallback
 const JIKAN_API_BASE_URL = process.env.JIKAN_API_BASE_URL || 'https://api.jikan.moe/v4';
-if(!JIKAN_API_BASE_URL){
-    console.log("JIKAN_API_BASE_URL is not defined");
-    process.exit(1);
-    
-}
 
-//making an fetch helper fucntion 
-const fetchtheanimeinfo = async (url,page=1,limit=10) => {
+/**
+ * Maps the raw Jikan API item to our desired format.
+ */
+const mapAnimeData = (item) => ({
+    title: item.title,
+    titleEnglish: item.title_english,
+    malScore: item.score,
+    status: item.status,
+    rating: item.rating,
+    airDate: item.aired?.from ? new Date(item.aired.from).toUTCString() : null,
+    broadcast: item.broadcast ? `${item.broadcast.day} at ${item.broadcast.time} (${item.broadcast.timezone})` : null
+});
+
+/**
+ * Fetches data from the Jikan API and returns it in a structured format.
+ * @param {string} url - The Jikan API URL to fetch.
+ * @param {number} page - The page number for pagination.
+ * @param {number} limit - The number of items per page.
+ * @returns {Promise<object>} - A promise that resolves to the structured data.
+ */
+const fetchFromJikan = async (url, page = 1, limit = 25) => {
     try {
-        const response = new URL(url);
-        response.searchParams.append('page', page);
-        response.searchParams.append('limit', limit);
-        //for debuugin
-        console.log(`fetching from the API ${response.toString()}`);
-        const axion=await axios.get(response.toString());
-        const AnimeList=axion.data.data;
-        const pagination = axion.data.pagination;
-        const filteroutput=AnimeList.map((item)=>({
-            
-                "title_english":item.title_english,
-                "title_japanese":item.title_japanese,
-                "rating":item.rating,
-                "Air_Date":item.aired&& item.aired.from ? new Date(item.aired.from).toUTCString() : null,
-                "MAL":item.score,
-                "Status":item.status,
-                "Time and Date" : [item.broadcast.day,item.broadcast.time]
+        const fullUrl = new URL(url);
+        fullUrl.searchParams.append('page', page);
+        fullUrl.searchParams.append('limit', limit);
 
+        console.log(`Fetching from Jikan API: ${fullUrl.toString()}`);
 
-           
-        }));
-        //const page=axion.data.pagination;
-        
-        
-        return{
-            data:filteroutput,
-          pagination:{
-            current_page:pagination.current_page,
-            has_next_page:pagination.has_next_page,
-          ttotalPages: pagination.last_visible_page,
-                limit:pagination.items.per_page
-          }
-        }
+        const axiosResponse = await axios.get(fullUrl.toString());
+        const animeList = axiosResponse.data.data;
+        const pagination = axiosResponse.data.pagination;
 
-        
-    
-        
+        return {
+            data: animeList, // Return raw data for now, will be mapped later
+            pagination
+        };
     } catch (error) {
-        console.error(`Error fetching data from API: ${error.message}`);
-        // Re-throw the error to be caught by the controller's catch block
+        console.error(`Error fetching data from Jikan API: ${error.message}`);
+        if (error.response) {
+            console.error('Jikan API Response:', error.response.data);
+        }
+        throw error; // Re-throw to be handled by the Express error handler
+    }
+};
+
+// Controller for getting the current season's anime
+exports.GetCurrentSeasonAnime = async (req, res, next) => {
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 25;
+    if (limit > 25) limit = 25;
+
+    try {
+        const url = `${JIKAN_API_BASE_URL}/seasons/now`;
+        const result = await fetchFromJikan(url, page, limit);
+        res.json({
+            data: result.data.map(mapAnimeData),
+            pagination: result.pagination
+        });
+    } catch (error) {
         next(error);
     }
 };
 
-//gettting anime for the current season
-exports.GetCurrentSeasonAnime = async (req, res, next) => {
-    const url = `${JIKAN_API_BASE_URL}/seasons/now`;
+// Controller for getting anime by year and season
+exports.GetAnimeByYearAndSeason = async (req, res, next) => {
+    const { year, season } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 25;
+    if (limit > 25) limit = 25;
+
+    if (!year || isNaN(parseInt(year))) {
+        return res.status(400).json({ success: false, message: 'Invalid or missing year.' });
+    }
+    const validSeasons = ['spring', 'summer', 'fall', 'winter'];
+    if (!season || !validSeasons.includes(season.toLowerCase())) {
+        return res.status(400).json({ success: false, message: 'Invalid or missing season.' });
+    }
+
     try {
-        const data = await fetchtheanimeinfo(url);
-        res.json(data);
+        const url = `${JIKAN_API_BASE_URL}/seasons/${year}/${season}`;
+        const result = await fetchFromJikan(url, page, limit);
+        res.json({
+            data: result.data.map(mapAnimeData),
+            pagination: result.pagination
+        });
     } catch (error) {
-        next(error); // Pass error to Express error handler
+        next(error);
     }
 };
 
-// getting anime for a specific year and season
-exports.GetAnimeByYearAndSeason = async (req, res, next) => {
-    const { year, season } = req.params;
-    const url = `${JIKAN_API_BASE_URL}/seasons/${year}/${season}`;
-    try {
-        const data = await fetchtheanimeinfo(url);
-        res.json(data);
-    } catch (error) {
-        next(error); // Pass error to Express error handler
+// Controller for searching for a particular anime by name
+exports.GetParticularAnimeInfo = async (req, res, next) => {
+    const { name } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 25; // Fetch more to have enough to filter from
+    
+    if (!name || name.trim() === '') {
+        return res.status(400).json({ success: false, message: 'Anime name for search is required.' });
     }
-}
-//getting a particular anime info 
-exports.GetParticularAnimeInfo = async (req, res) => {
-    const { name} = req.params;
-    const url = `${JIKAN_API_BASE_URL}/anime?q=${encodeURIComponent(name)}&limit=${encodeURIComponent(10)}`;
+
     try {
-        const data = await fetchtheanimeinfo(url);
-        res.json(data);
-    }catch(error){
-        throw new Error("cannot get the anime info");
+        const url = `${JIKAN_API_BASE_URL}/anime?q=${encodeURIComponent(name)}`;
+        const result = await fetchFromJikan(url, page, limit);
+
+        // --- THIS IS THE FIX ---
+        // Filter the results to only include relevant anime
+        const lowerCaseName = name.toLowerCase();
+        const filteredData = result.data.filter(item => {
+            const title = (item.title || '').toLowerCase();
+            const titleEnglish = (item.title_english || '').toLowerCase();
+            // Keep the item if its title or English title includes the search term
+            return title.includes(lowerCaseName) || titleEnglish.includes(lowerCaseName);
+        });
+
+        if (filteredData.length === 0) {
+            return res.status(404).json({ success: false, message: `No relevant anime found matching "${name}".` });
+        }
         
+        // Map the *filtered* data to our desired format
+        res.json({
+            data: filteredData.map(mapAnimeData),
+            // Note: Pagination from Jikan might be misleading now, as we've filtered items.
+            // For simplicity, we'll omit it for search results.
+        });
+
+    } catch (error) {
+        next(error);
     }
-}
+};
