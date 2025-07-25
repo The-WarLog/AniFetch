@@ -6,7 +6,7 @@ var logger = require('morgan');
 const cors = require('cors'); // 1. Import cors
 require('dotenv').config(); // 2. Load environment variables
 
-var animeRouter = require('./routes/animeroutes');
+var animeRouter = require('../routes/animeroutes');
 
 var app = express();
 
