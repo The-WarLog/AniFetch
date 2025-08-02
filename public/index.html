@@ -227,7 +227,7 @@
             font-weight: bold;
         }
 
-        /* About Modal Styles */
+        /* Modal Styles (About & Contact) */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.6); display: flex;
@@ -242,12 +242,40 @@
             position: relative; transform: scale(0.9); transition: transform 0.3s;
         }
         .modal-overlay.visible .modal-content { transform: scale(1); }
-        .modal-content h2 { margin-bottom: 15px; }
+        .modal-content h2 { margin-bottom: 15px; color: #9744a7; }
         .modal-content p { margin-bottom: 10px; line-height: 1.6; }
         .modal-close-btn {
             position: absolute; top: 15px; right: 15px;
             background: none; border: none; font-size: 1.8em;
-            cursor: pointer; color: #888;
+            cursor: pointer; color: #888; transition: color 0.2s;
+        }
+        .modal-close-btn:hover { color: #333; }
+
+        /* Contact Modal Specific Styles */
+        .contact-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .contact-info h3 {
+            color: #9744a7;
+            margin-bottom: 10px;
+        }
+        .email-link {
+            color: #9744a7;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 8px 16px;
+            border: 2px solid #9744a7;
+            border-radius: 6px;
+            display: inline-block;
+            margin: 10px 0;
+            transition: all 0.2s;
+        }
+        .email-link:hover {
+            background: #9744a7;
+            color: white;
         }
 
         /* Footer */
@@ -255,6 +283,15 @@
             display: flex; justify-content: space-between; align-items: center;
             background: #222; color: #fff; padding: 24px 32px;
             margin-top: 40px; box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+        }
+        .social-link {
+            color: #fff;
+            text-decoration: none;
+            margin-left: 15px;
+            transition: color 0.2s;
+        }
+        .social-link:hover {
+            color: #66e0ff;
         }
 
         /* Additional Status Styling */
@@ -341,7 +378,7 @@
             <ul>
                 <li><a id="home-link">Home</a></li>
                 <li><a id="about-link">About</a></li>
-                <li><a id="email-link">Contact</a></li>
+                <li><a id="contact-link">Contact</a></li>
             </ul>
         </nav>
     </header>
@@ -383,14 +420,37 @@
         <div class="cards"></div>
     </main>
 
+    <!-- About Modal -->
     <div class="modal-overlay" id="about-modal">
         <div class="modal-content">
-            <button class="modal-close-btn" id="modal-close">&times;</button>
+            <button class="modal-close-btn" id="about-modal-close">&times;</button>
             <h2>About AnimeSpace</h2>
             <p>This project is a platform for anime fans to discover, search, and explore anime content, powered by the Jikan API.</p>
             <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
             <p><b>Created by:</b></p>
             <p>Varun (Frontend) & Divyesh (Backend)</p>
+        </div>
+    </div>
+
+    <!-- Contact Modal -->
+    <div class="modal-overlay" id="contact-modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="contact-modal-close">&times;</button>
+            <h2>Contact Us</h2>
+            <div class="contact-info">
+                <h3>Get in Touch</h3>
+                <p>Have questions, suggestions, or feedback about AnimeSpace?</p>
+                <p>We'd love to hear from you!</p>
+                
+                <a href="divyeshgaigol16@gmail.com" class="email-link">
+                    📧 divyeshgaigol16@gmail.com
+                </a>
+                
+                <p style="margin-top: 15px; font-size: 0.9em; color: #666;">
+                    Feel free to reach out for any anime recommendations, 
+                    technical issues, or collaboration opportunities.
+                </p>
+            </div>
         </div>
     </div>
 
@@ -407,8 +467,11 @@
         // DOM Elements
         const homeLink = document.getElementById('home-link');
         const aboutLink = document.getElementById('about-link');
+        const contactLink = document.getElementById('contact-link');
         const aboutModal = document.getElementById('about-modal');
-        const modalCloseBtn = document.getElementById('modal-close');
+        const contactModal = document.getElementById('contact-modal');
+        const aboutModalCloseBtn = document.getElementById('about-modal-close');
+        const contactModalCloseBtn = document.getElementById('contact-modal-close');
         const nameSearchInput = document.getElementById('name-search-input');
         const nameSearchBtn = document.getElementById('name-search-btn');
         const yearSelect = document.getElementById('year-select');
@@ -491,9 +554,7 @@
                 status: anime.status,
                 rating: anime.rating,
                 airDate: anime.aired?.from ? 
-                    new Date(anime.aired.from).toUTCString(): 'Unknown',
-                airto: anime.aired?.to ? 
-                    new Date(anime.aired.to).toUTCString() : 'Unknown' ,
+                    new Date(anime.aired.from).toLocaleDateString() : 'Unknown',
                 broadcast: formatBroadcastData(anime.broadcast),
                 synopsis: anime.synopsis || 'No synopsis available.',
                 episodes: anime.episodes || 'Unknown',
@@ -543,11 +604,8 @@
                         <p><span class="label">Status:</span> <span class="${statusClass}">${anime.status || 'Unknown'}</span></p>
                         <p><span class="label">Rating:</span> ${anime.rating || 'Not Rated'}</p>
                         <p><span class="label">Episodes:</span> ${anime.episodes}</p>
-                        <p><span class="label">Air From:</span> ${anime.airDate}</p>
-                        <p><span class="label">Air To:</span> ${anime.airto}</p>
+                        <p><span class="label">Air Date:</span> ${anime.airDate}</p>
                         <p><span class="label">Broadcast:</span> ${anime.broadcast}</p>
-                        <p><span class="label">Year:</span> ${anime.year}</p>
-                     
                     </div>
                 `;
                 cardsContainer.appendChild(card);
@@ -643,11 +701,11 @@
             let url;
             if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('your-backend')) {
                 // Using your backend
-                url = `${API_BASE_URL}/search/${encodeURIComponent(query)}?limit=25`;
+                url = `${API_BASE_URL}/search/${encodeURIComponent(query)}?limit=20`;
                 if (rating) url += `&rating=${rating}`;
             } else {
                 // Direct Jikan API
-                url = `${API_BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=25`;
+                url = `${API_BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=20`;
                 if (rating) url += `&rating=${rating}`;
             }
             
@@ -726,6 +784,15 @@
             }
         }
 
+        // Modal control functions
+        function openModal(modal) {
+            modal.classList.add('visible');
+        }
+
+        function closeModal(modal) {
+            modal.classList.remove('visible');
+        }
+
         // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
             populateYearDropdown();
@@ -754,10 +821,17 @@
             seasonSearchBtn.addEventListener('click', handleSeasonSearch);
 
             // Modal functionality
-            aboutLink.addEventListener('click', () => aboutModal.classList.add('visible'));
-            modalCloseBtn.addEventListener('click', () => aboutModal.classList.remove('visible'));
+            aboutLink.addEventListener('click', () => openModal(aboutModal));
+            aboutModalCloseBtn.addEventListener('click', () => closeModal(aboutModal));
             aboutModal.addEventListener('click', (event) => {
-                if (event.target === aboutModal) aboutModal.classList.remove('visible');
+                if (event.target === aboutModal) closeModal(aboutModal);
+            });
+
+            // Contact modal functionality
+            contactLink.addEventListener('click', () => openModal(contactModal));
+            contactModalCloseBtn.addEventListener('click', () => closeModal(contactModal));
+            contactModal.addEventListener('click', (event) => {
+                if (event.target === contactModal) closeModal(contactModal);
             });
 
             // Rating filter change
