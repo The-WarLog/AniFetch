@@ -129,17 +129,88 @@
             transform: translateY(-5px) scale(1.03);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
         }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
         .card h3 {
             font-size: 1.2em;
-            margin-bottom: 12px;
-            min-height: 50px;
+            margin: 0;
+            flex: 1;
+            margin-right: 10px;
+            line-height: 1.3;
         }
-        .card p {
+        .score {
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .score-high { background: #4CAF50; color: white; }
+        .score-medium { background: #FF9800; color: white; }
+        .score-low { background: #f44336; color: white; }
+        .card-content p {
             font-size: 0.95em;
             line-height: 1.5;
-        }
-        .card p:not(:last-child) {
             margin-bottom: 8px;
+        }
+        .label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        /* Loading States */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            grid-column: 1 / -1;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #9744a7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error States */
+        .error-container {
+            text-align: center;
+            padding: 60px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            border: 2px solid #ff6b6b;
+            grid-column: 1 / -1;
+        }
+        .error-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        .retry-btn {
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: #9744a7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .retry-btn:hover {
+            background: #813a90;
         }
 
         /* Status/Error Message Styling */
@@ -185,6 +256,82 @@
             background: #222; color: #fff; padding: 24px 32px;
             margin-top: 40px; box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
         }
+
+        /* Additional Status Styling */
+        .status-airing {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .status-finished {
+            color: #2196F3;
+        }
+
+        .status-other {
+            color: #FF9800;
+        }
+
+        .result-count {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            grid-column: 1 / -1;
+            border: 2px solid #9744a7;
+        }
+
+        .result-count p {
+            margin: 0;
+            color: #9744a7;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .controls-grid {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .control-group {
+                border-right: none;
+                border-bottom: 1px solid rgba(0,0,0,0.1);
+                justify-content: center;
+                text-align: center;
+            }
+            
+            .control-group:last-child {
+                border-bottom: none;
+            }
+            
+            .cards {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            
+            .main-title {
+                font-size: 1.5em;
+            }
+            
+            nav ul {
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .control-group {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .control-group input,
+            .control-group select,
+            .control-group button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -203,7 +350,7 @@
         <div class="controls-grid">
             <div class="control-group">
                 <label for="name-search-input">Search by Name:</label>
-                <input type="text" id="name-search-input" placeholder="e.g., 'Cowboy Bebop'">
+                <input type="text" id="name-search-input" placeholder="e.g., 'Cowboy Bebop'" minlength="2">
                 <button id="name-search-btn">Search</button>
             </div>
             <div class="control-group">
@@ -257,6 +404,7 @@
     </footer>
 
     <script>
+        // DOM Elements
         const homeLink = document.getElementById('home-link');
         const aboutLink = document.getElementById('about-link');
         const aboutModal = document.getElementById('about-modal');
@@ -269,75 +417,302 @@
         const ratingSelect = document.getElementById('rating-select');
         const cardsContainer = document.querySelector('.cards');
 
-        const API_BASE_URL ="https://api.jikan.moe/v4";
+        // Configuration - Choose one of these approaches:
+        
+        // Option 1: Use your backend (Recommended)
+        // const API_BASE_URL = "http://localhost:3000/anime";
+        
+        // Option 2: Direct Jikan API calls (Current fix)
+        const API_BASE_URL = "https://api.jikan.moe/v4";
+        
+        // Search timeout for debouncing
+        let searchTimeout;
+
+        // Utility Functions
+        function showLoadingSpinner(message = 'Loading...') {
+            cardsContainer.innerHTML = `
+                <div class="loading-container">
+                    <div class="spinner"></div>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        function showErrorMessage(message, canRetry = true, retryAction = null) {
+            const retryButton = canRetry && retryAction ? 
+                `<button onclick="${retryAction}()" class="retry-btn">Try Again</button>` : '';
+            
+            cardsContainer.innerHTML = `
+                <div class="error-container">
+                    <div class="error-icon">⚠️</div>
+                    <h3>Oops! Something went wrong</h3>
+                    <p>${message}</p>
+                    ${retryButton}
+                </div>
+            `;
+        }
 
         function showStatusMessage(message, isError = false) {
             cardsContainer.innerHTML = `<div class="status-message ${isError ? 'error' : ''}">${message}</div>`;
         }
 
+        // Better Broadcast Data Handling
+        function formatBroadcastData(broadcast) {
+            if (!broadcast) return 'Not Scheduled';
+            
+            const day = broadcast.day || null;
+            const time = broadcast.time || null;
+            const timezone = broadcast.timezone || null;
+            
+            if (!day && !time) return 'Not Scheduled';
+            if (!day) return time ? `At ${time}` : 'Not Scheduled';
+            if (!time) return `${day}s`;
+            
+            // Clean timezone display
+            const timezoneDisplay = timezone && timezone !== 'Unknown' ? ` (${timezone})` : '';
+            
+            return `${day}s at ${time}${timezoneDisplay}`;
+        }
+
+        // Enhanced Data mapping with duplicate removal
+        function mapJikanData(animeList) {
+            if (!Array.isArray(animeList)) return [];
+            
+            // Remove duplicates based on MAL ID
+            const uniqueAnime = animeList.filter((anime, index, self) => 
+                index === self.findIndex(a => a.mal_id === anime.mal_id)
+            );
+            
+            return uniqueAnime.map(anime => ({
+                malId: anime.mal_id, // Add unique identifier
+                title: anime.title || 'Unknown Title',
+                titleEnglish: anime.title_english || anime.title || 'Unknown Title',
+                malScore: anime.score,
+                status: anime.status,
+                rating: anime.rating,
+                airDate: anime.aired?.from ? 
+                    new Date(anime.aired.from).toLocaleDateString() : 'Unknown',
+                broadcast: formatBroadcastData(anime.broadcast),
+                synopsis: anime.synopsis || 'No synopsis available.',
+                episodes: anime.episodes || 'Unknown',
+                year: anime.year || (anime.aired?.from ? new Date(anime.aired.from).getFullYear() : 'Unknown')
+            }));
+        }
+
         function displayAnime(animeList) {
             cardsContainer.innerHTML = '';
+            
             if (!animeList || animeList.length === 0) {
-                showStatusMessage('No anime found for this selection.');
+                showStatusMessage('No anime found for this selection. Try different search terms or filters.');
                 return;
             }
+            
+            // Add result count
+            const resultCount = document.createElement('div');
+            resultCount.className = 'result-count';
+            resultCount.innerHTML = `<p>Found ${animeList.length} anime</p>`;
+            cardsContainer.appendChild(resultCount);
+            
             animeList.forEach(anime => {
                 const card = document.createElement('div');
                 card.className = 'card';
+                card.dataset.malId = anime.malId; // Add unique identifier for debugging
+                
+                // Score with color coding
+                const score = anime.malScore;
+                const scoreClass = score >= 8 ? 'score-high' : 
+                                 score >= 6 ? 'score-medium' : 
+                                 score ? 'score-low' : '';
+                
+                const scoreDisplay = score ? 
+                    `<div class="score ${scoreClass}">⭐ ${score}</div>` : 
+                    '<div class="score">⭐ N/A</div>';
+                
+                // Status indicator
+                const statusClass = anime.status === 'Currently Airing' ? 'status-airing' :
+                                   anime.status === 'Finished Airing' ? 'status-finished' : 'status-other';
+                
                 card.innerHTML = `
-                    <h3>${anime.titleEnglish || anime.title}</h3>
-                    <p><b>Score:</b> ${anime.malScore !== null ? anime.malScore : 'N/A'}</p>
-                    <p><b>Status:</b> ${anime.status || 'Unknown'}</p>
-                    <p><b>Rating:</b> ${anime.rating || 'N/A'}</p>
-                    <p><b>Air-Date:</b> ${anime.airDate || 'Unknown'}</p> 
-                    <p><b>Broadcast:</b> ${anime.broadcast || 'N/A'}</p>
+                    <div class="card-header">
+                        <h3 title="${anime.title}">${anime.titleEnglish}</h3>
+                        ${scoreDisplay}
+                    </div>
+                    <div class="card-content">
+                        <p><span class="label">Status:</span> <span class="${statusClass}">${anime.status || 'Unknown'}</span></p>
+                        <p><span class="label">Rating:</span> ${anime.rating || 'Not Rated'}</p>
+                        <p><span class="label">Episodes:</span> ${anime.episodes}</p>
+                        <p><span class="label">Air Date:</span> ${anime.airDate}</p>
+                        <p><span class="label">Broadcast:</span> ${anime.broadcast}</p>
+                    </div>
                 `;
                 cardsContainer.appendChild(card);
             });
         }
 
+        // API Functions
         async function fetchFromAPI(url, loadingMessage) {
-            showStatusMessage(loadingMessage);
+            showLoadingSpinner(loadingMessage);
+            
             try {
+                console.log(`Fetching from: ${url}`);
                 const response = await fetch(url);
-                const result = await response.json();
+                
+                // Check if response is ok
                 if (!response.ok) {
-                    throw new Error(result.message || `Request failed with status ${response.status}`);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                displayAnime(result.data);
+                
+                // Check content type
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Non-JSON response received:', text.substring(0, 200));
+                    throw new Error('Server returned non-JSON response. Please try again later.');
+                }
+                
+                const result = await response.json();
+                console.log('API Response:', result);
+                
+                // Handle different response structures
+                let animeData;
+                if (result.data) {
+                    // Direct Jikan API or your backend response
+                    animeData = Array.isArray(result.data) ? result.data : [result.data];
+                } else if (Array.isArray(result)) {
+                    // Direct array response
+                    animeData = result;
+                } else {
+                    throw new Error('Unexpected response format');
+                }
+                
+                // Additional validation
+                if (animeData.length === 0) {
+                    showStatusMessage('No anime found matching your search criteria. Try different terms or filters.');
+                    return;
+                }
+                
+                // Map data and remove duplicates
+                const mappedData = mapJikanData(animeData);
+                
+                if (mappedData.length === 0) {
+                    showStatusMessage('No valid anime data found. Please try again.');
+                    return;
+                }
+                
+                displayAnime(mappedData);
+                
             } catch (err) {
                 console.error("Fetch error:", err);
-                showStatusMessage(err.message, true);
+                
+                let errorMessage = 'An unexpected error occurred. ';
+                if (err.message.includes('Failed to fetch')) {
+                    errorMessage = 'Network error. Please check your internet connection and try again.';
+                } else if (err.message.includes('JSON')) {
+                    errorMessage = 'There was an issue with the server response. Please try again later.';
+                } else {
+                    errorMessage = err.message;
+                }
+                
+                showErrorMessage(errorMessage, true, 'retryLastAction');
             }
         }
 
+        // Search Functions
+        let lastAction = null;
+
         function handleNameSearch() {
             const query = nameSearchInput.value.trim();
-            if (!query) return;
+            if (!query) {
+                showStatusMessage('Please enter an anime name to search.', true);
+                return;
+            }
+            
+            if (query.length < 2) {
+                showStatusMessage('Please enter at least 2 characters to search.', true);
+                return;
+            }
+            
             const rating = ratingSelect.value;
-            let url = `${API_BASE_URL}/anime/search/${encodeURIComponent(query)}?limit=20`;
-            if (rating) url += `&rating=${rating}`;
+            
+            // Build URL based on API choice
+            let url;
+            if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('your-backend')) {
+                // Using your backend
+                url = `${API_BASE_URL}/search/${encodeURIComponent(query)}?limit=20`;
+                if (rating) url += `&rating=${rating}`;
+            } else {
+                // Direct Jikan API
+                url = `${API_BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=20`;
+                if (rating) url += `&rating=${rating}`;
+            }
+            
+            lastAction = () => handleNameSearch();
             fetchFromAPI(url, `Searching for "${query}"...`);
         }
         
         function handleSeasonSearch() {
             const year = yearSelect.value;
-            const season = seasonSelect.value;
+            const season = seasonSelect.value.toLowerCase();
             const rating = ratingSelect.value;
-            let url = `${API_BASE_URL}/anime/${year}/${season.toLowerCase()}?limit=20`;
-            if (rating) url += `&rating=${rating}`;
-            fetchFromAPI(url, `Fetching anime for ${season} ${year}...`);
+            
+            // Build URL based on API choice
+            let url;
+            if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('your-backend')) {
+                // Using your backend
+                url = `${API_BASE_URL}/${year}/${season}?limit=20`;
+                if (rating) url += `&rating=${rating}`;
+            } else {
+                // Direct Jikan API
+                url = `${API_BASE_URL}/seasons/${year}/${season}?limit=20`;
+                if (rating) url += `&rating=${rating}`;
+            }
+            
+            lastAction = () => handleSeasonSearch();
+            fetchFromAPI(url, `Fetching anime for ${seasonSelect.value} ${year}...`);
         }
 
         function fetchCurrentSeason() {
             const rating = ratingSelect.value;
-            let url = `${API_BASE_URL}/anime/current-season?limit=20`;
-            if (rating) url += `&rating=${rating}`;
+            
+            // Build URL based on API choice
+            let url;
+            if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('your-backend')) {
+                // Using your backend
+                url = `${API_BASE_URL}/current-season?limit=20`;
+                if (rating) url += `&rating=${rating}`;
+            } else {
+                // Direct Jikan API
+                url = `${API_BASE_URL}/seasons/now?limit=20`;
+                if (rating) url += `&rating=${rating}`;
+            }
+            
+            lastAction = () => fetchCurrentSeason();
             fetchFromAPI(url, 'Loading current season anime...');
         }
 
+        function retryLastAction() {
+            if (lastAction) {
+                lastAction();
+            } else {
+                fetchCurrentSeason();
+            }
+        }
+
+        // Debounced search function
+        function debounceSearch(query) {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (query.length >= 2) {
+                    handleNameSearch();
+                }
+            }, 500);
+        }
+
+        // Utility Functions
         function populateYearDropdown() {
             const currentYear = new Date().getFullYear();
+            yearSelect.innerHTML = ''; // Clear existing options
+            
             for (let year = currentYear; year >= 1990; year--) {
                 const option = document.createElement('option');
                 option.value = year;
@@ -346,24 +721,54 @@
             }
         }
 
+        // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
             populateYearDropdown();
             fetchCurrentSeason();
 
+            // Navigation
             homeLink.addEventListener('click', fetchCurrentSeason);
             
+            // Search functionality
             nameSearchBtn.addEventListener('click', handleNameSearch);
+            
             nameSearchInput.addEventListener('keyup', (event) => {
-                if (event.key === 'Enter') handleNameSearch();
+                if (event.key === 'Enter') {
+                    handleNameSearch();
+                } else {
+                    const query = event.target.value.trim();
+                    if (query.length >= 2) {
+                        debounceSearch(query);
+                    } else if (query.length === 0) {
+                        clearTimeout(searchTimeout);
+                        fetchCurrentSeason();
+                    }
+                }
             });
 
             seasonSearchBtn.addEventListener('click', handleSeasonSearch);
 
+            // Modal functionality
             aboutLink.addEventListener('click', () => aboutModal.classList.add('visible'));
             modalCloseBtn.addEventListener('click', () => aboutModal.classList.remove('visible'));
             aboutModal.addEventListener('click', (event) => {
                 if (event.target === aboutModal) aboutModal.classList.remove('visible');
             });
+
+            // Rating filter change
+            ratingSelect.addEventListener('change', () => {
+                if (lastAction) {
+                    lastAction();
+                } else {
+                    fetchCurrentSeason();
+                }
+            });
+        });
+
+        // Global error handler
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('Unhandled promise rejection:', event.reason);
+            showErrorMessage('An unexpected error occurred. Please refresh the page and try again.');
         });
     </script>
 </body>
