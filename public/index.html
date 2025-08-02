@@ -341,7 +341,7 @@
             <ul>
                 <li><a id="home-link">Home</a></li>
                 <li><a id="about-link">About</a></li>
-                <li><a>Contact</a></li>
+                <li><a id="email-link">Contact</a></li>
             </ul>
         </nav>
     </header>
@@ -491,7 +491,9 @@
                 status: anime.status,
                 rating: anime.rating,
                 airDate: anime.aired?.from ? 
-                    new Date(anime.aired.from).toLocaleDateString() : 'Unknown',
+                    new Date(anime.aired.from).toUTCString(): 'Unknown',
+                airto: anime.aired?.to ? 
+                    new Date(anime.aired.to).toUTCString() : 'Unknown' ,
                 broadcast: formatBroadcastData(anime.broadcast),
                 synopsis: anime.synopsis || 'No synopsis available.',
                 episodes: anime.episodes || 'Unknown',
@@ -541,8 +543,11 @@
                         <p><span class="label">Status:</span> <span class="${statusClass}">${anime.status || 'Unknown'}</span></p>
                         <p><span class="label">Rating:</span> ${anime.rating || 'Not Rated'}</p>
                         <p><span class="label">Episodes:</span> ${anime.episodes}</p>
-                        <p><span class="label">Air Date:</span> ${anime.airDate}</p>
+                        <p><span class="label">Air From:</span> ${anime.airDate}</p>
+                        <p><span class="label">Air To:</span> ${anime.airto}</p>
                         <p><span class="label">Broadcast:</span> ${anime.broadcast}</p>
+                        <p><span class="label">Year:</span> ${anime.year}</p>
+                     
                     </div>
                 `;
                 cardsContainer.appendChild(card);
@@ -638,11 +643,11 @@
             let url;
             if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('your-backend')) {
                 // Using your backend
-                url = `${API_BASE_URL}/search/${encodeURIComponent(query)}?limit=20`;
+                url = `${API_BASE_URL}/search/${encodeURIComponent(query)}?limit=25`;
                 if (rating) url += `&rating=${rating}`;
             } else {
                 // Direct Jikan API
-                url = `${API_BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=20`;
+                url = `${API_BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=25`;
                 if (rating) url += `&rating=${rating}`;
             }
             
