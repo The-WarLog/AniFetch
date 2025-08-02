@@ -5,380 +5,748 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AnimeSpace - Discover Anime</title>
     <style>
-        /* General Resets and Body Styling */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        /* CSS Variables for theming */
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --dark-bg: #1a1a2e;
+            --dark-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --shadow-light: 0 8px 32px rgba(31, 38, 135, 0.37);
+            --shadow-heavy: 0 15px 35px rgba(31, 38, 135, 0.5);
+            --border-radius: 20px;
+        }
+
         * { 
             padding: 0; 
             margin: 0; 
             box-sizing: border-box; 
         }
+
         body { 
-            background-color: rgb(101, 207, 221); 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            color: #333;
+            background: var(--dark-gradient);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        /* Header and Navigation */
-        header {
-            background: #222;
-            color: #fff;
-            padding: 16px 32px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        /* Custom Scrollbar for Webkit Browsers */
+        ::-webkit-scrollbar {
+            width: 12px;
         }
+
+        ::-webkit-scrollbar-track {
+            background: var(--glass-bg);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-gradient);
+            border-radius: 10px;
+            border: 2px solid rgba(0,0,0,0.2);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-gradient);
+        }
+
+
+        /* Animated background particles */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 200, 255, 0.2) 0%, transparent 50%);
+            z-index: -1;
+            animation: backgroundShift 15s ease-in-out infinite;
+        }
+
+        @keyframes backgroundShift {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+        }
+
+        /* Header with glassmorphism */
+        header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 20px 40px;
+            position: relative;
+            z-index: 10;
+            box-shadow: var(--shadow-light);
+        }
+
         .main-title {
             text-align: center;
-            margin-bottom: 12px;
-            font-size: 2em;
+            margin-bottom: 20px;
+            font-size: 3rem;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(79, 172, 254, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
         }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.3)); }
+            to { filter: drop-shadow(0 0 20px rgba(79, 172, 254, 0.6)); }
+        }
+
         nav ul {
             list-style: none;
             display: flex;
             justify-content: center;
-            gap: 30px;
+            align-items: center;
+            gap: 40px;
+            flex-wrap: wrap;
         }
+
         nav ul li a {
-            color: #fff;
+            color: var(--text-primary);
             text-decoration: none;
-            font-weight: bold;
-            font-size: 1.1em;
-            transition: color 0.2s;
+            font-weight: 500;
+            font-size: 1.1rem;
+            padding: 12px 24px;
+            border-radius: 50px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
+            position: relative;
         }
+
         nav ul li a:hover {
-            color: #66e0ff;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-heavy);
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.2);
         }
 
-        /* Controls Area */
+        /* Modern controls section */
         .controls-container {
-            padding: 24px 16px;
-            background-color: rgba(0, 0, 0, 0.05);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-        .controls-grid {
-            max-width: 1000px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        .control-group {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            padding: 10px;
-            border-right: 2px solid rgba(0,0,0,0.1);
-        }
-        .control-group:last-child {
-            border-right: none;
-        }
-        .control-group label {
-            font-weight: bold;
-        }
-        .control-group input[type="text"], .control-group select {
-            padding: 10px 14px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 1em;
-            transition: box-shadow 0.2s;
-        }
-        .control-group input[type="text"]:focus, .control-group select:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(151, 68, 167, 0.4);
-        }
-        .control-group button {
-            padding: 10px 22px;
-            border-radius: 8px;
-            border: none;
-            background: #9744a7;
-            color: #fff;
-            font-weight: bold;
-            font-size: 1em;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.2s;
-        }
-        .control-group button:hover {
-            background: #813a90;
-            transform: scale(1.05);
+            padding: 40px 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            margin: 20px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-light);
         }
 
-        /* Main Content Container */
-        .content-wrapper {
+        .controls-grid {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 24px;
-        }
-        .cards {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 24px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            align-items: center;
         }
-        .card {
-            background: #fff;
-            color: #222;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            padding: 20px;
+
+        .control-group {
             display: flex;
             flex-direction: column;
-            transition: transform 0.2s, box-shadow 0.2s;
+            gap: 15px;
+            padding: 25px;
+            background: var(--glass-bg);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
         }
+
+        .control-group:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-heavy);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .control-group label {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .control-inputs {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .control-group input[type="text"], 
+        .control-group select {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px 20px;
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23ffffff' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+        }
+
+        /* FIX: Style the dropdown options */
+        .control-group select option {
+            background: var(--dark-bg);
+            color: var(--text-primary);
+        }
+
+        .control-group input[type="text"]:focus, 
+        .control-group select:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .control-group input[type="text"]::placeholder {
+            color: var(--text-muted);
+        }
+
+        .modern-btn {
+            padding: 15px 30px;
+            border-radius: 15px;
+            border: none;
+            background: var(--primary-gradient);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            min-width: 120px;
+        }
+
+        .modern-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--secondary-gradient);
+            transition: left 0.3s ease;
+        }
+
+        .modern-btn:hover::before {
+            left: 0;
+        }
+
+        .modern-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .modern-btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Content wrapper with floating cards */
+        .content-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--glass-border);
+            padding: 30px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            will-change: transform; /* Hint for smoother animation */
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--accent-gradient);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+
         .card:hover {
-            transform: translateY(-5px) scale(1.03);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: var(--shadow-heavy);
+            border-color: rgba(255, 255, 255, 0.3);
         }
+
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 15px;
-        }
-        .card h3 {
-            font-size: 1.2em;
-            margin: 0;
-            flex: 1;
-            margin-right: 10px;
-            line-height: 1.3;
-        }
-        .score {
-            padding: 4px 8px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            font-weight: bold;
-            white-space: nowrap;
-        }
-        .score-high { background: #4CAF50; color: white; }
-        .score-medium { background: #FF9800; color: white; }
-        .score-low { background: #f44336; color: white; }
-        .card-content p {
-            font-size: 0.95em;
-            line-height: 1.5;
-            margin-bottom: 8px;
-        }
-        .label {
-            font-weight: bold;
-            color: #555;
+            margin-bottom: 20px;
         }
 
-        /* Loading States */
+        .card h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin: 0;
+            flex: 1;
+            margin-right: 15px;
+            line-height: 1.4;
+            color: var(--text-primary);
+        }
+
+        .score {
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .score-high { 
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+        }
+        .score-medium { 
+            background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+        }
+        .score-low { 
+            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .card-content p {
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        .label {
+            font-weight: 600;
+            color: var(--text-primary);
+            display: inline-block;
+            min-width: 80px;
+        }
+
+        /* Enhanced loading states */
         .loading-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 60px;
+            padding: 80px;
             grid-column: 1 / -1;
         }
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #9744a7;
+
+        .modern-spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--glass-border);
+            border-top: 3px solid #4facfe;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+            animation: modernSpin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            margin-bottom: 25px;
+            position: relative;
         }
-        @keyframes spin {
+
+        .modern-spinner::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            border: 2px solid transparent;
+            border-top: 2px solid #f093fb;
+            border-radius: 50%;
+            animation: modernSpin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite reverse;
+        }
+
+        @keyframes modernSpin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
 
-        /* Error States */
-        .error-container {
-            text-align: center;
-            padding: 60px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 15px;
-            border: 2px solid #ff6b6b;
-            grid-column: 1 / -1;
-        }
-        .error-icon {
-            font-size: 3em;
-            margin-bottom: 20px;
-        }
-        .retry-btn {
-            margin-top: 20px;
-            padding: 12px 24px;
-            background: #9744a7;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-        .retry-btn:hover {
-            background: #813a90;
-        }
-
-        /* Status/Error Message Styling */
-        .status-message {
-            text-align: center;
-            font-size: 1.2em;
-            padding: 40px;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 12px;
-            grid-column: 1 / -1;
-        }
-        .status-message.error {
-            color: #d93025;
-            font-weight: bold;
-        }
-
-        /* Modal Styles (About & Contact) */
+        /* Modal improvements */
         .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6); display: flex;
-            justify-content: center; align-items: center;
-            opacity: 0; visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s; z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s;
+            z-index: 1000;
         }
-        .modal-overlay.visible { opacity: 1; visibility: visible; }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
         .modal-content {
-            background: white; padding: 30px 40px; border-radius: 12px;
-            max-width: 500px; width: 90%; text-align: center;
-            position: relative; transform: scale(0.9); transition: transform 0.3s;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 40px 50px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--glass-border);
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-heavy);
         }
-        .modal-overlay.visible .modal-content { transform: scale(1); }
-        .modal-content h2 { margin-bottom: 15px; color: #9744a7; }
-        .modal-content p { margin-bottom: 10px; line-height: 1.6; }
+
+        .modal-overlay.visible .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            font-size: 2rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
         .modal-close-btn {
-            position: absolute; top: 15px; right: 15px;
-            background: none; border: none; font-size: 1.8em;
-            cursor: pointer; color: #888; transition: color 0.2s;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .modal-close-btn:hover { color: #333; }
 
-        /* Contact Modal Specific Styles */
+        .modal-close-btn:hover {
+            background: var(--secondary-gradient);
+            transform: rotate(90deg);
+        }
+
+        /* Contact modal enhancements */
         .contact-info {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 15px 0;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            margin: 20px 0;
+            border: 1px solid var(--glass-border);
         }
-        .contact-info h3 {
-            color: #9744a7;
-            margin-bottom: 10px;
-        }
+
         .email-link {
-            color: #9744a7;
+            color: var(--text-primary);
             text-decoration: none;
-            font-weight: bold;
-            padding: 8px 16px;
-            border: 2px solid #9744a7;
-            border-radius: 6px;
+            font-weight: 600;
+            padding: 15px 30px;
+            background: var(--primary-gradient);
+            border-radius: 25px;
             display: inline-block;
-            margin: 10px 0;
-            transition: all 0.2s;
+            margin: 15px 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
         }
+
+        .email-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--secondary-gradient);
+            transition: left 0.3s ease;
+        }
+
+        .email-link:hover::before {
+            left: 0;
+        }
+
         .email-link:hover {
-            background: #9744a7;
-            color: white;
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-heavy);
         }
 
-        /* Footer */
+        .email-link span {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Footer modernization */
         .footer-bar {
-            display: flex; justify-content: space-between; align-items: center;
-            background: #222; color: #fff; padding: 24px 32px;
-            margin-top: 40px; box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            color: var(--text-primary);
+            padding: 30px 40px;
+            margin: 40px 20px 20px 20px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-light);
+            flex-wrap: wrap;
+            gap: 20px;
         }
-        .social-link {
-            color: #fff;
-            text-decoration: none;
-            margin-left: 15px;
-            transition: color 0.2s;
-        }
-        .social-link:hover {
-            color: #66e0ff;
+        
+        .footer-right {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
-        /* Additional Status Styling */
+        .social-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .social-link:hover {
+            color: var(--text-primary);
+            background: var(--primary-gradient);
+            transform: translateY(-2px);
+        }
+
+        /* Status indicators with modern styling */
         .status-airing {
-            color: #4CAF50;
-            font-weight: bold;
+            color: #4ade80;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
         }
 
         .status-finished {
-            color: #2196F3;
+            color: #60a5fa;
+            font-weight: 600;
         }
 
         .status-other {
-            color: #FF9800;
+            color: #fb923c;
+            font-weight: 600;
         }
 
         .result-count {
             text-align: center;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-weight: bold;
+            padding: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+            font-weight: 600;
             grid-column: 1 / -1;
-            border: 2px solid #9744a7;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-light);
         }
 
         .result-count p {
             margin: 0;
-            color: #9744a7;
+            font-size: 1.2rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        /* Mobile Responsiveness */
-        @media (max-width: 768px) {
+        /* Error states with modern design */
+        .error-container {
+            text-align: center;
+            padding: 60px 30px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            grid-column: 1 / -1;
+            box-shadow: var(--shadow-light);
+        }
+
+        .error-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 10px rgba(248, 113, 113, 0.5));
+        }
+
+        .status-message {
+            text-align: center;
+            font-size: 1.3rem;
+            padding: 50px 30px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: var(--border-radius);
+            grid-column: 1 / -1;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-light);
+        }
+
+        /* Responsive design improvements */
+        @media (max-width: 900px) {
             .controls-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                font-size: 15px;
+            }
+            
+            header {
+                padding: 15px 20px;
+            }
+
+            .main-title {
+                font-size: 2.2rem;
+            }
+
+            .controls-grid {
+                gap: 20px;
+            }
+
+            .control-inputs {
                 flex-direction: column;
-                align-items: stretch;
             }
-            
-            .control-group {
-                border-right: none;
-                border-bottom: 1px solid rgba(0,0,0,0.1);
-                justify-content: center;
-                text-align: center;
-            }
-            
-            .control-group:last-child {
-                border-bottom: none;
-            }
-            
+
             .cards {
                 grid-template-columns: 1fr;
-                gap: 16px;
+                gap: 25px;
             }
-            
-            .main-title {
-                font-size: 1.5em;
+
+            nav ul li a {
+                padding: 10px 18px;
+                font-size: 1rem;
             }
-            
-            nav ul {
-                gap: 15px;
+
+            .footer-bar {
+                justify-content: center;
             }
         }
 
         @media (max-width: 480px) {
-            .control-group {
-                flex-direction: column;
-                gap: 8px;
+            .controls-container,
+            .footer-bar {
+                margin: 20px 10px;
+            }
+
+            .content-wrapper {
+                padding: 20px 10px;
             }
             
-            .control-group input,
-            .control-group select,
-            .control-group button {
-                width: 100%;
-                max-width: 300px;
+            .modal-content {
+                padding: 30px 25px;
+                width: calc(100% - 20px);
+                margin: 10px;
             }
+        }
+
+        /* Micro animations */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        .card:nth-child(even) {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .card:nth-child(odd) {
+            animation: float 6s ease-in-out infinite;
+            animation-delay: -3s;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1 class="main-title">AnimeSpace</h1>
+        <h1 class="main-title">✨ AnimeSpace</h1>
         <nav>
             <ul>
-                <li><a id="home-link">Home</a></li>
-                <li><a id="about-link">About</a></li>
-                <li><a id="contact-link">Contact</a></li>
+                <li><a id="home-link">🏠 Home</a></li>
+                <li><a id="about-link">ℹ️ About</a></li>
+                <li><a id="contact-link">📧 Contact</a></li>
             </ul>
         </nav>
     </header>
@@ -386,32 +754,44 @@
     <div class="controls-container">
         <div class="controls-grid">
             <div class="control-group">
-                <label for="name-search-input">Search by Name:</label>
-                <input type="text" id="name-search-input" placeholder="e.g., 'Cowboy Bebop'" minlength="2">
-                <button id="name-search-btn">Search</button>
+                <label for="name-search-input">🔍 Search by Name</label>
+                <div class="control-inputs">
+                    <input type="text" id="name-search-input" placeholder="e.g., 'Attack on Titan'" minlength="2">
+                    <button class="modern-btn" id="name-search-btn">
+                        <span>Search</span>
+                    </button>
+                </div>
             </div>
+            
             <div class="control-group">
-                <label for="year-select">Search by Season:</label>
-                <select id="year-select"></select>
-                <select id="season-select">
-                    <option value="Winter">Winter</option>
-                    <option value="Spring">Spring</option>
-                    <option value="Summer">Summer</option>
-                    <option value="Fall">Fall</option>
-                </select>
-                <button id="season-search-btn">Get Season</button>
+                <label for="year-select">📅 Search by Season</label>
+                <div class="control-inputs">
+                    <select id="year-select"></select>
+                    <select id="season-select">
+                        <option value="Winter">❄️ Winter</option>
+                        <option value="Spring">🌸 Spring</option>
+                        <option value="Summer">☀️ Summer</option>
+                        <option value="Fall">🍂 Fall</option>
+                    </select>
+                    <button class="modern-btn" id="season-search-btn">
+                        <span>Get Season</span>
+                    </button>
+                </div>
             </div>
+            
             <div class="control-group">
-                <label for="rating-select">Filter by Rating:</label>
-                <select id="rating-select">
-                    <option value="">All</option>
-                    <option value="g">G - All Ages</option>
-                    <option value="pg">PG - Children</option>
-                    <option value="pg13">PG-13</option>
-                    <option value="r17">R - 17+</option>
-                    <option value="r">R+ (Mild Nudity)</option>
-                    <option value="rx">Rx (Hentai)</option>
-                </select>
+                <label for="rating-select">🎯 Filter by Rating</label>
+                <div class="control-inputs">
+                    <select id="rating-select">
+                        <option value="">All Ratings</option>
+                        <option value="g">G - All Ages</option>
+                        <option value="pg">PG - Children</option>
+                        <option value="pg13">PG-13</option>
+                        <option value="r17">R - 17+</option>
+                        <option value="r">R+ (Mild Nudity)</option>
+                        <option value="rx">Rx (Hentai)</option>
+                    </select>
+                </div>
             </div>
         </div>
     </div>
@@ -423,43 +803,50 @@
     <!-- About Modal -->
     <div class="modal-overlay" id="about-modal">
         <div class="modal-content">
-            <button class="modal-close-btn" id="about-modal-close">&times;</button>
+            <button class="modal-close-btn" id="about-modal-close" aria-label="Close about modal">×</button>
             <h2>About AnimeSpace</h2>
-            <p>This project is a platform for anime fans to discover, search, and explore anime content, powered by the Jikan API.</p>
-            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
-            <p><b>Created by:</b></p>
-            <p>Varun (Frontend) & Divyesh (Backend)</p>
+            <p>Welcome to the future of anime discovery! This cutting-edge platform leverages the powerful Jikan API to bring you the most comprehensive anime database experience.</p>
+            <div class="contact-info">
+                <h3>🚀 Our Team</h3>
+                <p><strong>Varun</strong> - Frontend Architect</p>
+                <p><strong>Divyesh</strong> - Backend Engineer</p>
+                <p style="margin-top: 20px; font-style: italic;">Built with passion for the anime community ❤️</p>
+            </div>
         </div>
     </div>
 
     <!-- Contact Modal -->
     <div class="modal-overlay" id="contact-modal">
         <div class="modal-content">
-            <button class="modal-close-btn" id="contact-modal-close">&times;</button>
-            <h2>Contact Us</h2>
+            <button class="modal-close-btn" id="contact-modal-close" aria-label="Close contact modal">×</button>
+            <h2>Get in Touch</h2>
             <div class="contact-info">
-                <h3>Get in Touch</h3>
-                <p>Have questions, suggestions, or feedback about AnimeSpace?</p>
-                <p>We'd love to hear from you!</p>
+                <h3>💬 Let's Connect!</h3>
+                <p>Got questions, suggestions, or just want to chat about anime?</p>
+                <p>We're always excited to hear from fellow anime enthusiasts!</p>
                 
-                <a href="divyeshgaigol16@gmail.com" class="email-link">
-                    📧 divyeshgaigol16@gmail.com
+                <a href="mailto:your.email@example.com" class="email-link">
+                    <span>📧 your.email@example.com</span>
                 </a>
                 
-                <p style="margin-top: 15px; font-size: 0.9em; color: #666;">
-                    Feel free to reach out for any anime recommendations, 
-                    technical issues, or collaboration opportunities.
+                <p style="margin-top: 20px; font-size: 0.95rem; color: var(--text-muted);">
+                    ✨ Reach out for anime recommendations, technical feedback, 
+                    collaboration opportunities, or just to say hello!
                 </p>
             </div>
         </div>
     </div>
 
     <footer class="footer-bar">
-        <div class="footer-left">Thank You</div>
+        <div class="footer-left">
+            <span style="background: var(--accent-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-weight: 600;">
+                Made with ❤️ for Anime Lovers
+            </span>
+        </div>
         <div class="footer-right">
-            <a href="#" class="social-link">Instagram</a>
-            <a href="#" class="social-link">Twitter</a>
-            <a href="#" class="social-link">Facebook</a>
+            <a href="#" class="social-link">📷 Instagram</a>
+            <a href="#" class="social-link">🐦 Twitter</a>
+            <a href="#" class="social-link">📘 Facebook</a>
         </div>
     </footer>
 
@@ -480,81 +867,78 @@
         const ratingSelect = document.getElementById('rating-select');
         const cardsContainer = document.querySelector('.cards');
 
-        // Configuration - Choose one of these approaches:
-        
-        // Option 1: Use your backend (Recommended)
-        // const API_BASE_URL = "http://localhost:3000/anime";
-        
-        // Option 2: Direct Jikan API calls (Current fix)
+        // API Configuration
         const API_BASE_URL = "https://api.jikan.moe/v4";
         
-        // Search timeout for debouncing
+        // State Management
         let searchTimeout;
+        let lastAction = null;
+        let currentRequestCount = 0; // To prevent race conditions
 
         // Utility Functions
-        function showLoadingSpinner(message = 'Loading...') {
+        function showLoadingSpinner(message = 'Loading amazing anime...') {
             cardsContainer.innerHTML = `
                 <div class="loading-container">
-                    <div class="spinner"></div>
-                    <p>${message}</p>
+                    <div class="modern-spinner"></div>
+                    <p style="font-size: 1.2rem; font-weight: 500;">${message}</p>
                 </div>
             `;
         }
 
         function showErrorMessage(message, canRetry = true, retryAction = null) {
             const retryButton = canRetry && retryAction ? 
-                `<button onclick="${retryAction}()" class="retry-btn">Try Again</button>` : '';
+                `<button onclick="${retryAction}()" class="modern-btn" style="margin-top: 20px;">
+                    <span>✨ Try Again</span>
+                </button>` : '';
             
             cardsContainer.innerHTML = `
                 <div class="error-container">
                     <div class="error-icon">⚠️</div>
-                    <h3>Oops! Something went wrong</h3>
-                    <p>${message}</p>
+                    <h3 style="margin-bottom: 15px; font-size: 1.5rem;">Oops! Something went wrong</h3>
+                    <p style="margin-bottom: 20px; color: var(--text-secondary);">${message}</p>
                     ${retryButton}
                 </div>
             `;
         }
 
         function showStatusMessage(message, isError = false) {
-            cardsContainer.innerHTML = `<div class="status-message ${isError ? 'error' : ''}">${message}</div>`;
+            const icon = isError ? '❌' : '💫';
+            cardsContainer.innerHTML = `
+                <div class="status-message ${isError ? 'error' : ''}">
+                    ${icon} ${message}
+                </div>
+            `;
         }
 
-        // Better Broadcast Data Handling
+        // Data Handling
         function formatBroadcastData(broadcast) {
             if (!broadcast) return 'Not Scheduled';
-            
             const day = broadcast.day || null;
             const time = broadcast.time || null;
-            const timezone = broadcast.timezone || null;
+            const timezone = broadcast.timezone || 'JST';
             
             if (!day && !time) return 'Not Scheduled';
-            if (!day) return time ? `At ${time}` : 'Not Scheduled';
+            if (!day) return time ? `At ${time} (${timezone})` : 'Not Scheduled';
             if (!time) return `${day}s`;
             
-            // Clean timezone display
-            const timezoneDisplay = timezone && timezone !== 'Unknown' ? ` (${timezone})` : '';
-            
-            return `${day}s at ${time}${timezoneDisplay}`;
+            return `${day} at ${time} (${timezone})`;
         }
 
-        // Enhanced Data mapping with duplicate removal
         function mapJikanData(animeList) {
             if (!Array.isArray(animeList)) return [];
             
-            // Remove duplicates based on MAL ID
             const uniqueAnime = animeList.filter((anime, index, self) => 
-                index === self.findIndex(a => a.mal_id === anime.mal_id)
+                anime.mal_id && index === self.findIndex(a => a.mal_id === anime.mal_id)
             );
             
             return uniqueAnime.map(anime => ({
-                malId: anime.mal_id, // Add unique identifier
+                malId: anime.mal_id,
                 title: anime.title || 'Unknown Title',
                 titleEnglish: anime.title_english || anime.title || 'Unknown Title',
                 malScore: anime.score,
                 status: anime.status,
                 rating: anime.rating,
-                airDate: anime.aired?.from ? 
-                    new Date(anime.aired.from).toLocaleDateString() : 'Unknown',
+                airDate: anime.aired?.from ? new Date(anime.aired.from).toLocaleDateString() : 'Unknown',
                 broadcast: formatBroadcastData(anime.broadcast),
                 synopsis: anime.synopsis || 'No synopsis available.',
                 episodes: anime.episodes || 'Unknown',
@@ -566,34 +950,26 @@
             cardsContainer.innerHTML = '';
             
             if (!animeList || animeList.length === 0) {
-                showStatusMessage('No anime found for this selection. Try different search terms or filters.');
+                showStatusMessage('No anime found for this selection. Try different search terms! 🔍', true);
                 return;
             }
             
-            // Add result count
             const resultCount = document.createElement('div');
             resultCount.className = 'result-count';
-            resultCount.innerHTML = `<p>Found ${animeList.length} anime</p>`;
+            resultCount.innerHTML = `<p>🎯 Found ${animeList.length} incredible anime!</p>`;
             cardsContainer.appendChild(resultCount);
             
             animeList.forEach(anime => {
                 const card = document.createElement('div');
                 card.className = 'card';
-                card.dataset.malId = anime.malId; // Add unique identifier for debugging
+                card.dataset.malId = anime.malId;
                 
-                // Score with color coding
                 const score = anime.malScore;
-                const scoreClass = score >= 8 ? 'score-high' : 
-                                 score >= 6 ? 'score-medium' : 
-                                 score ? 'score-low' : '';
+                const scoreClass = score >= 8 ? 'score-high' : score >= 6 ? 'score-medium' : score ? 'score-low' : '';
+                const scoreDisplay = score ? `<div class="score ${scoreClass}">⭐ ${score.toFixed(2)}</div>` : '<div class="score">⭐ N/A</div>';
                 
-                const scoreDisplay = score ? 
-                    `<div class="score ${scoreClass}">⭐ ${score}</div>` : 
-                    '<div class="score">⭐ N/A</div>';
-                
-                // Status indicator
-                const statusClass = anime.status === 'Currently Airing' ? 'status-airing' :
-                                   anime.status === 'Finished Airing' ? 'status-finished' : 'status-other';
+                const statusClass = anime.status === 'Currently Airing' ? 'status-airing' : anime.status === 'Finished Airing' ? 'status-finished' : 'status-other';
+                const statusIcon = anime.status === 'Currently Airing' ? '🔴' : anime.status === 'Finished Airing' ? '✅' : '⏸️';
                 
                 card.innerHTML = `
                     <div class="card-header">
@@ -601,7 +977,7 @@
                         ${scoreDisplay}
                     </div>
                     <div class="card-content">
-                        <p><span class="label">Status:</span> <span class="${statusClass}">${anime.status || 'Unknown'}</span></p>
+                        <p><span class="label">Status:</span> <span class="${statusClass}">${statusIcon} ${anime.status || 'Unknown'}</span></p>
                         <p><span class="label">Rating:</span> ${anime.rating || 'Not Rated'}</p>
                         <p><span class="label">Episodes:</span> ${anime.episodes}</p>
                         <p><span class="label">Air Date:</span> ${anime.airDate}</p>
@@ -613,65 +989,45 @@
         }
 
         // API Functions
-        async function fetchFromAPI(url, loadingMessage) {
+        async function fetchFromAPI(url, loadingMessage, requestNumber) {
             showLoadingSpinner(loadingMessage);
             
             try {
-                console.log(`Fetching from: ${url}`);
                 const response = await fetch(url);
                 
-                // Check if response is ok
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                if (requestNumber < currentRequestCount) {
+                    console.log('Ignoring stale API request.');
+                    return;
                 }
                 
-                // Check content type
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    const text = await response.text();
-                    console.error('Non-JSON response received:', text.substring(0, 200));
-                    throw new Error('Server returned non-JSON response. Please try again later.');
+                if (!response.ok) {
+                    let errorText;
+                    if (response.status === 404) {
+                        errorText = "The resource you requested could not be found. Please check your search terms.";
+                    } else if (response.status === 429) {
+                        errorText = "Too many requests sent to the server. Please wait a moment and try again.";
+                    } else {
+                        errorText = `HTTP ${response.status}: ${response.statusText}. The server returned an error.`;
+                    }
+                    throw new Error(errorText);
                 }
                 
                 const result = await response.json();
-                console.log('API Response:', result);
+                const animeData = result.data ? (Array.isArray(result.data) ? result.data : [result.data]) : [];
                 
-                // Handle different response structures
-                let animeData;
-                if (result.data) {
-                    // Direct Jikan API or your backend response
-                    animeData = Array.isArray(result.data) ? result.data : [result.data];
-                } else if (Array.isArray(result)) {
-                    // Direct array response
-                    animeData = result;
-                } else {
-                    throw new Error('Unexpected response format');
-                }
-                
-                // Additional validation
                 if (animeData.length === 0) {
-                    showStatusMessage('No anime found matching your search criteria. Try different terms or filters.');
+                    showStatusMessage('No anime found matching your search criteria. Try different terms! 🔍', true);
                     return;
                 }
                 
-                // Map data and remove duplicates
                 const mappedData = mapJikanData(animeData);
-                
-                if (mappedData.length === 0) {
-                    showStatusMessage('No valid anime data found. Please try again.');
-                    return;
-                }
-                
                 displayAnime(mappedData);
                 
             } catch (err) {
-                console.error("Fetch error:", err);
-                
+                console.error("❌ Fetch error:", err);
                 let errorMessage = 'An unexpected error occurred. ';
                 if (err.message.includes('Failed to fetch')) {
-                    errorMessage = 'Network error. Please check your internet connection and try again.';
-                } else if (err.message.includes('JSON')) {
-                    errorMessage = 'There was an issue with the server response. Please try again later.';
+                    errorMessage = '🌐 Network error. Please check your internet connection and try again.';
                 } else {
                     errorMessage = err.message;
                 }
@@ -680,88 +1036,57 @@
             }
         }
 
-        // Search Functions
-        let lastAction = null;
-
+        // Search Handlers
         function handleNameSearch() {
+            clearTimeout(searchTimeout);
             const query = nameSearchInput.value.trim();
-            if (!query) {
-                showStatusMessage('Please enter an anime name to search.', true);
-                return;
-            }
-            
             if (query.length < 2) {
-                showStatusMessage('Please enter at least 2 characters to search.', true);
+                showStatusMessage('Please enter at least 2 characters to search! 📝', true);
                 return;
             }
             
             const rating = ratingSelect.value;
+            let url = `${API_BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=24&sfw`;
+            if (rating) url += `&rating=${rating}`;
             
-            // Build URL based on API choice
-            let url;
-            if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('your-backend')) {
-                // Using your backend
-                url = `${API_BASE_URL}/search/${encodeURIComponent(query)}?limit=20`;
-                if (rating) url += `&rating=${rating}`;
-            } else {
-                // Direct Jikan API
-                url = `${API_BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=20`;
-                if (rating) url += `&rating=${rating}`;
-            }
-            
-            lastAction = () => handleNameSearch();
-            fetchFromAPI(url, `Searching for "${query}"...`);
+            lastAction = handleNameSearch;
+            currentRequestCount++;
+            fetchFromAPI(url, `🔍 Searching for "${query}"...`, currentRequestCount);
         }
         
         function handleSeasonSearch() {
+            clearTimeout(searchTimeout);
             const year = yearSelect.value;
             const season = seasonSelect.value.toLowerCase();
             const rating = ratingSelect.value;
             
-            // Build URL based on API choice
-            let url;
-            if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('your-backend')) {
-                // Using your backend
-                url = `${API_BASE_URL}/${year}/${season}?limit=20`;
-                if (rating) url += `&rating=${rating}`;
-            } else {
-                // Direct Jikan API
-                url = `${API_BASE_URL}/seasons/${year}/${season}?limit=20`;
-                if (rating) url += `&rating=${rating}`;
-            }
+            let url = `${API_BASE_URL}/seasons/${year}/${season}?limit=24&sfw`;
+            if (rating) url += `&rating=${rating}`;
             
-            lastAction = () => handleSeasonSearch();
-            fetchFromAPI(url, `Fetching anime for ${seasonSelect.value} ${year}...`);
+            lastAction = handleSeasonSearch;
+            currentRequestCount++;
+            fetchFromAPI(url, `📅 Fetching anime for ${seasonSelect.value} ${year}...`, currentRequestCount);
         }
 
         function fetchCurrentSeason() {
+            clearTimeout(searchTimeout);
             const rating = ratingSelect.value;
+            let url = `${API_BASE_URL}/seasons/now?limit=24&sfw`;
+            if (rating) url += `&rating=${rating}`;
             
-            // Build URL based on API choice
-            let url;
-            if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('your-backend')) {
-                // Using your backend
-                url = `${API_BASE_URL}/current-season?limit=20`;
-                if (rating) url += `&rating=${rating}`;
-            } else {
-                // Direct Jikan API
-                url = `${API_BASE_URL}/seasons/now?limit=20`;
-                if (rating) url += `&rating=${rating}`;
-            }
-            
-            lastAction = () => fetchCurrentSeason();
-            fetchFromAPI(url, 'Loading current season anime...');
+            lastAction = fetchCurrentSeason;
+            currentRequestCount++;
+            fetchFromAPI(url, '🌟 Loading current season anime...', currentRequestCount);
         }
 
         function retryLastAction() {
-            if (lastAction) {
+            if (typeof lastAction === 'function') {
                 lastAction();
             } else {
                 fetchCurrentSeason();
             }
         }
 
-        // Debounced search function
         function debounceSearch(query) {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
@@ -771,11 +1096,11 @@
             }, 500);
         }
 
-        // Utility Functions
+        // UI Initializers & Event Listeners
         function populateYearDropdown() {
             const currentYear = new Date().getFullYear();
-            yearSelect.innerHTML = ''; // Clear existing options
-            
+            yearSelect.innerHTML = '';
+            // Corrected loop: starts from the current year
             for (let year = currentYear; year >= 1990; year--) {
                 const option = document.createElement('option');
                 option.value = year;
@@ -784,71 +1109,66 @@
             }
         }
 
-        // Modal control functions
         function openModal(modal) {
             modal.classList.add('visible');
+            document.body.style.overflow = 'hidden';
         }
 
         function closeModal(modal) {
             modal.classList.remove('visible');
+            document.body.style.overflow = 'auto';
         }
 
-        // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
             populateYearDropdown();
             fetchCurrentSeason();
 
-            // Navigation
             homeLink.addEventListener('click', fetchCurrentSeason);
-            
-            // Search functionality
             nameSearchBtn.addEventListener('click', handleNameSearch);
             
             nameSearchInput.addEventListener('keyup', (event) => {
                 if (event.key === 'Enter') {
                     handleNameSearch();
                 } else {
-                    const query = event.target.value.trim();
-                    if (query.length >= 2) {
-                        debounceSearch(query);
-                    } else if (query.length === 0) {
-                        clearTimeout(searchTimeout);
-                        fetchCurrentSeason();
-                    }
+                    debounceSearch(event.target.value.trim());
                 }
             });
 
             seasonSearchBtn.addEventListener('click', handleSeasonSearch);
 
-            // Modal functionality
             aboutLink.addEventListener('click', () => openModal(aboutModal));
             aboutModalCloseBtn.addEventListener('click', () => closeModal(aboutModal));
             aboutModal.addEventListener('click', (event) => {
                 if (event.target === aboutModal) closeModal(aboutModal);
             });
 
-            // Contact modal functionality
             contactLink.addEventListener('click', () => openModal(contactModal));
             contactModalCloseBtn.addEventListener('click', () => closeModal(contactModal));
             contactModal.addEventListener('click', (event) => {
                 if (event.target === contactModal) closeModal(contactModal);
             });
 
-            // Rating filter change
             ratingSelect.addEventListener('change', () => {
-                if (lastAction) {
+                if (typeof lastAction === 'function') {
                     lastAction();
                 } else {
                     fetchCurrentSeason();
                 }
             });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    if (aboutModal.classList.contains('visible')) closeModal(aboutModal);
+                    if (contactModal.classList.contains('visible')) closeModal(contactModal);
+                }
+            });
         });
 
-        // Global error handler
         window.addEventListener('unhandledrejection', (event) => {
-            console.error('Unhandled promise rejection:', event.reason);
-            showErrorMessage('An unexpected error occurred. Please refresh the page and try again.');
+            console.error('❌ Unhandled promise rejection:', event.reason);
+            showErrorMessage('An unexpected error occurred. Please refresh the page and try again! 🔄', false);
         });
+
     </script>
 </body>
 </html>
