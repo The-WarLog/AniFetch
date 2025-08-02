@@ -331,7 +331,7 @@
 
         function fetchCurrentSeason() {
             const rating = ratingSelect.value;
-            let url = `${API_BASE_URL}/anime/current-season`;
+            let url = `${API_BASE_URL}/anime/current-season?limit=20`;
             if (rating) url += `&rating=${rating}`;
             fetchFromAPI(url, 'Loading current season anime...');
         }
